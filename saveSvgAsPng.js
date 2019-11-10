@@ -17,8 +17,8 @@
       (function(image) {
         var href = image.getAttributeNS("http://www.w3.org/1999/xlink", "href");
         if (href) {
-          if (isExternal(href.value)) {
-            console.warn("Cannot render embedded images linking to external hosts: "+href.value);
+          if (isExternal(href)) { //getAttributeNS returns the string attribute value not a URL object
+            console.warn("Cannot render embedded images linking to external hosts: " + href);
             return;
           }
         }
