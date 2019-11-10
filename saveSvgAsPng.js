@@ -17,33 +17,41 @@
       (function(image) {
         var href = image.getAttributeNS("http://www.w3.org/1999/xlink", "href");
         if (href) {
-          if (isExternal(href.value)) {
-            console.warn("Cannot render embedded images linking to external hosts: "+href.value);
-            return;
+          if (isExternal(href)) { //getAttributeNS returns the string attribute value not a URL object
+            console.warn("Cannot render embedded images linking to external hosts: " + href);
+            // need to ensure the callback is fired if we've completed processing and the last item happens to be an
+            // external image that can't be added to the canvas (becuase it would be tainted)
+            left--;
+            if (left == 0) {
+              callback();
+            }
+          }
+          else{
+            var canvas = document.createElement('canvas');
+            var ctx = canvas.getContext('2d');
+            var img = new Image();
+            href = href || image.getAttribute('href');
+            img.src = href;
+            img.onload = function() {
+              canvas.width = img.width;
+              canvas.height = img.height;
+              ctx.drawImage(img, 0, 0);
+              image.setAttributeNS("http://www.w3.org/1999/xlink", "href", canvas.toDataURL('image/png'));
+              left--;
+              if (left == 0) {
+                callback();
+              }
+            }
+            img.onerror = function() {
+              console.log("Could not load "+href);
+              left--;
+              if (left == 0) {
+                callback();
+              }
+            }
           }
         }
-        var canvas = document.createElement('canvas');
-        var ctx = canvas.getContext('2d');
-        var img = new Image();
-        href = href || image.getAttribute('href');
-        img.src = href;
-        img.onload = function() {
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx.drawImage(img, 0, 0);
-          image.setAttributeNS("http://www.w3.org/1999/xlink", "href", canvas.toDataURL('image/png'));
-          left--;
-          if (left == 0) {
-            callback();
-          }
-        }
-        img.onerror = function() {
-          console.log("Could not load "+href);
-          left--;
-          if (left == 0) {
-            callback();
-          }
-        }
+        
       })(images[i]);
     }
   }
@@ -174,3 +182,4 @@
     });
   }
 })();
+
